@@ -2,7 +2,7 @@ import ACPalette from '@/actiler/palette'
 
 const Buffer = require('buffer/').Buffer
 
-class DataManager{
+class DataManager {
   constructor () {
     this.preparedData = Buffer.alloc(620)
     this.rawTitle = Buffer.alloc(40)
@@ -28,21 +28,21 @@ class DataManager{
   // convert a string to a specific size array in reverse low to high word notation salads
   // aka if a ascii code is 0x00AA
   // it will reverse it to  0xAA00
-  hexEncodeReverse(input, size){
+  hexEncodeReverse (input, size) {
     let hex, i
     let result = Buffer.alloc(size)
 
-    for (i=0; i<input.length; i++) {
-      let idoubled = i*2
-      hex = input.charCodeAt(i).toString(16);
-      let encodedchar = ("000"+hex).slice(-4)
+    for (i = 0; i < input.length; i++) {
+      let idoubled = i * 2
+      hex = input.charCodeAt(i).toString(16)
+      let encodedchar = ('000' + hex).slice(-4)
       let highword = parseInt(encodedchar.substring(0, 2), 16)
       let lowword = parseInt(encodedchar.substring(2, 4), 16)
 
-      console.log(highword + " " + lowword)
+      console.log(highword + ' ' + lowword)
 
       result[idoubled] = lowword
-      result[idoubled+1] = highword
+      result[idoubled + 1] = highword
     }
 
     console.log(result.toString('hex'))
@@ -50,22 +50,22 @@ class DataManager{
     return result
   }
 
-  setTitle(title) {
+  setTitle (title) {
     let truncated = title.substring(0, 20)
     this.rawTitle = this.hexEncodeReverse(truncated, 40)
   }
 
-  setAuthor(author) {
+  setAuthor (author) {
     let truncated = author.substring(0, 8)
     this.rawAuthor = this.hexEncodeReverse(truncated, 16)
   }
 
-  setTown(town) {
+  setTown (town) {
     let truncated = town.substring(0, 8)
     this.rawTown = this.hexEncodeReverse(truncated, 16)
   }
 
-  getPreparedData() {
+  getPreparedData () {
     this.preparedData = Buffer.concat([
       this.rawTitle,
       this.unknown1,
@@ -84,22 +84,22 @@ class DataManager{
     return new Uint8ClampedArray(this.preparedData)
   }
 
-  setPalette(colorobj) {
+  setPalette (colorobj) {
     let colorMap = ACPalette.getHexMap()
 
     let keys = Object.keys(colorobj) // keys of uint32's
 
-    if(keys.length <= 15 && keys.length > 0){
+    if (keys.length <= 15 && keys.length > 0) {
       let map = {}
       let values = []
 
       console.log(colorMap)
 
-      for(let i in keys){
+      for (let i in keys) {
         let hexkey = keys[i]
         let paletteHexValue = colorMap[hexkey]
 
-        console.log("hex: ")
+        console.log('hex: ')
         console.log(paletteHexValue)
 
         map[hexkey] = i
@@ -111,27 +111,26 @@ class DataManager{
       console.log(this.colorMap)
       console.log(values)
 
-      for(let p in values){
+      for (let p in values) {
         this.rawColors[p] = values[p]
       }
 
       return true
-    }else{
+    } else {
       return false
     }
 
-
   }
 
-  injectPhotoData(pcontainer){
+  injectPhotoData (pcontainer) {
     let pointArray = pcontainer.getPointArray()
 
-    console.log("Injecting photo data")
+    console.log('Injecting photo data')
 
     let count = 0
-    for(let i = 0; i < 512; i++){
-      let pointhigh = pointArray[i*2]
-      let pointlow = pointArray[(i*2) + 1]
+    for (let i = 0; i < 512; i++) {
+      let pointhigh = pointArray[i * 2]
+      let pointlow = pointArray[(i * 2) + 1]
 
       let rhex = ACPalette.dec2hex(pointhigh.r)
       let ghex = ACPalette.dec2hex(pointhigh.g)
@@ -156,10 +155,10 @@ class DataManager{
       count++
     }
 
-    console.log("Injected " + count + " pixels")
+    console.log('Injected ' + count + ' pixels')
   }
 
-  printData() {
+  printData () {
     console.log(this.preparedData)
   }
 }

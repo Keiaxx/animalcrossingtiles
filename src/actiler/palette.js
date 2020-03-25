@@ -1,3 +1,4 @@
+// palette definitions from https://github.com/DamSenViet/react-acnl-pattern-tool/blob/master/src/acnl.js#L348
 const palette = {
   //pinks
   0x00: '#FFEFFF',
@@ -200,15 +201,13 @@ const ACPalette = {
     for (let p in palette) {
       let hex = palette[p]
 
-      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-      let toadd = result ? {
+      let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+      output[hex] = result ? {
         r: parseInt(result[1], 16),
         g: parseInt(result[2], 16),
         b: parseInt(result[3], 16),
         rawh: p
       } : null
-
-      output[hex] = toadd
     }
 
     return output
@@ -219,7 +218,7 @@ const ACPalette = {
     for (let p in palette) {
       let hex = palette[p]
 
-      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+      let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
 
       output[String(result[1] + result[2] + result[3]).toLowerCase()] = p
     }

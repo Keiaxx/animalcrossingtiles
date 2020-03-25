@@ -14,7 +14,7 @@
       <router-view/>
     </div>
 
-    <div slot="footer">2020 Keiaxx Box Salad</div>
+    <div slot="footer">2020 <a href="http://github.com/Keiaxx">Keiaxx</a> Box Salad</div>
   </fish-layout>
 </template>
 

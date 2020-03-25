@@ -1,41 +1,41 @@
 <template>
   <div>
-    <fish-card fluid color="green">
+    <fish-card color="green" fluid>
       <div slot="header">Create Pattern</div>
       <fish-row>
-        <fish-col spam="6" class="demo-col">
-          <fish-card fluid color="gray">
+        <fish-col class="demo-col" spam="6">
+          <fish-card color="gray" fluid>
             <div slot="header">Pattern Details</div>
             <fish-row>
-              <fish-col span="24" class="demo-col">
-                <fish-input label-left="Title" hint="" v-model="title"></fish-input>
+              <fish-col class="demo-col" span="24">
+                <fish-input hint="" label-left="Title" v-model="title"></fish-input>
               </fish-col>
             </fish-row>
             <fish-row>
-              <fish-col span="24" class="demo-col">
-                <fish-input label-left="Author" hint="" v-model="author"></fish-input>
+              <fish-col class="demo-col" span="24">
+                <fish-input hint="" label-left="Author" v-model="author"></fish-input>
               </fish-col>
             </fish-row>
             <fish-row>
-              <fish-col span="24" class="demo-col">
-                <fish-input label-left="Town Name" hint="" v-model="town"></fish-input>
+              <fish-col class="demo-col" span="24">
+                <fish-input hint="" label-left="Town Name" v-model="town"></fish-input>
               </fish-col>
             </fish-row>
           </fish-card>
         </fish-col>
 
-        <fish-col span="9" class="demo-col">
+        <fish-col class="demo-col" span="9">
 
-          <fish-card fluid color="gray">
+          <fish-card color="gray" fluid>
             <div slot="header">Input Image</div>
 
-            <input type="file" @change="onFileChange">
+            <input @change="onFileChange" type="file">
             {{photoStatus}}
 
             <fish-field label="Tiles Width">
               <fish-select v-model="gridw">
                 <template v-for="size in gridwidths">
-                  <fish-option :index="size" :content="String(size)"></fish-option>
+                  <fish-option :content="String(size)" :index="size"></fish-option>
                 </template>
               </fish-select>
             </fish-field>
@@ -43,20 +43,20 @@
             <fish-field label="Tiles Height">
               <fish-select v-model="gridh">
                 <template v-for="size in gridheights">
-                  <fish-option :index="size" :content="String(size)"></fish-option>
+                  <fish-option :content="String(size)" :index="size"></fish-option>
                 </template>
               </fish-select>
             </fish-field>
 
             <cropper
-              classname="cropper"
+              :minHeight="1"
+              :minWidth="1"
               :src="img"
               :stencil-props="{
               aspectRatio: this.gridw/this.gridh
               }"
-              :minHeight="1"
-              :minWidth="1"
               @change="change"
+              classname="cropper"
             ></cropper>
 
             <fish-loader :active="loadingphoto"></fish-loader>
@@ -64,8 +64,8 @@
           </fish-card>
         </fish-col>
 
-        <fish-col span="9" class="demo-col">
-          <fish-card fluid color="gray">
+        <fish-col class="demo-col" span="9">
+          <fish-card color="gray" fluid>
             <div slot="header">Output Image</div>
             <canvas ref="imagecanvas"></canvas>
             <fish-loader :active="redrawingoutput"></fish-loader>
@@ -76,18 +76,19 @@
 
       <div slot="footer">
         <fish-button v-on:click="clearData">Clear Photo</fish-button>
-        <fish-button v-on:click="generateCodes" :loading="qrStatus===1">Generate QR Code(s)</fish-button>
+        <fish-button :loading="qrStatus===1" v-on:click="generateCodes">Generate QR Code(s)</fish-button>
       </div>
     </fish-card>
 
 
-    <fish-card fluid color="blue">
+    <fish-card color="blue" fluid>
       <div slot="header">Generated Code(s)</div>
 
 
       <template v-for="tile in toGenerate">
-        <fish-col span="8" class="demo-col">
-          <QRComponent :tile="String(tile.tile)" :title="title" :author="author" :town="town" :pdata="tile.pdata" :palette="rawPaletteColors"></QRComponent>
+        <fish-col class="demo-col" span="8">
+          <QRComponent :author="author" :palette="rawPaletteColors" :pdata="tile.pdata" :tile="String(tile.tile)" :title="title"
+                       :town="town"></QRComponent>
         </fish-col>
       </template>
 
@@ -101,8 +102,6 @@
   </div>
 </template>
 <script>
-  import QRCode from 'qrcode'
-  import DataManager from '../actiler/datamanager'
   import ACPalette from '../actiler/palette'
   import { Cropper } from 'vue-advanced-cropper'
   import resizeImageData from 'resize-image-data'
@@ -161,13 +160,13 @@
       }
     },
     watch: {
-      title: function(val) {
+      title: function (val) {
         this.toGenerate = []
       },
-      author: function(val) {
+      author: function (val) {
         this.toGenerate = []
       },
-      town: function(val) {
+      town: function (val) {
         this.toGenerate = []
       }
     },
@@ -225,7 +224,6 @@
 
           const inPointContainer = iq.utils.PointContainer.fromUint8Array(imageData2.data, 32 * this.gridw, 32 * this.gridh)
 
-
           // desired colors number
           var targetColors = 15
           var distanceCalculator = new iq.distance.EuclideanBT709NoAlpha()
@@ -277,7 +275,7 @@
           let colors = {}
           let uint32array = []
           var nearestColorACDistance = new iq.distance.Manhattan()
-          for(let p in inpointArray){
+          for (let p in inpointArray) {
             let point = inpointArray[p]
             let pointColor = loadedPalette.getNearestColor(nearestColorACDistance, point)
 
@@ -286,9 +284,9 @@
             let bhex = ACPalette.dec2hex(pointColor.b)
             let hexcolor = String(rhex + ghex + bhex).toLowerCase()
 
-            if(colors.hasOwnProperty(hexcolor)){
-              colors[hexcolor] = colors[hexcolor]+1
-            }else{
+            if (colors.hasOwnProperty(hexcolor)) {
+              colors[hexcolor] = colors[hexcolor] + 1
+            } else {
               colors[hexcolor] = 1
             }
 
@@ -296,7 +294,7 @@
           }
 
           let inpointACPalette = iq.utils.PointContainer.fromUint32Array(Uint32Array.from(uint32array), 32 * this.gridw, 32 * this.gridh)
-          let acPalettizedImage =  new ImageData(Uint8ClampedArray.from(inpointACPalette.toUint8Array()), 32 * this.gridw, 32 * this.gridh)
+          let acPalettizedImage = new ImageData(Uint8ClampedArray.from(inpointACPalette.toUint8Array()), 32 * this.gridw, 32 * this.gridh)
           console.log(colors)
           console.log(Object.keys(colors).length)
           this.rawPaletteColors = colors
@@ -331,8 +329,6 @@
                 pdata: tileContainer
               })
 
-
-
               let toshow = resizeImageData(tile32, displaypx, displaypx, 'nearest-neighbor')
 
               ctx2.putImageData(toshow, (w * displaypx), (h * displaypx))
@@ -341,9 +337,9 @@
               ctx2.beginPath()
 
               ctx2.globalAlpha = 0.3
-              ctx2.font = "40px Arial";
-              ctx2.fillStyle = "red";
-              ctx2.fillText(String(num), (w * displaypx) + 10, (h * displaypx) + 40);
+              ctx2.font = '40px Arial'
+              ctx2.fillStyle = 'red'
+              ctx2.fillText(String(num), (w * displaypx) + 10, (h * displaypx) + 40)
 
               ctx2.globalAlpha = 0.3
               ctx2.moveTo((w * displaypx), (h * displaypx))

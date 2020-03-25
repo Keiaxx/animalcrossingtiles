@@ -1,8 +1,8 @@
 <template>
-  <fish-card fluid color="purple">
+  <fish-card color="purple" fluid>
     <div slot="header">QR for tile {{tile}}</div>
 
-    <canvas ref="qrcanvas" width="200" height="200"></canvas>
+    <canvas height="200" ref="qrcanvas" width="200"></canvas>
   </fish-card>
 </template>
 
@@ -23,7 +23,7 @@
       palette: Object,
     },
     methods: {
-      generate() {
+      generate () {
         let dm = new DataManager()
 
         dm.setTitle(this.title)
@@ -32,7 +32,7 @@
 
         let succ = dm.setPalette(this.palette)
 
-        if(succ){
+        if (succ) {
           dm.injectPhotoData(this.pdata)
         }
 
@@ -47,12 +47,12 @@
               return
             }
 
-            console.log("Generated QR Code for " + this.tile)
+            console.log('Generated QR Code for ' + this.tile)
           })
       }
     },
-    mounted: function() {
-      console.log("QR COMPONENT FOR TILE " + this.tile)
+    mounted: function () {
+      console.log('QR COMPONENT FOR TILE ' + this.tile)
       this.generate()
     }
   }
