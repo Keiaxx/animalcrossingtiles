@@ -194,6 +194,7 @@
       },
       change ({ coordinates, canvas }) {
         this.redrawingoutput = true
+        this.convertedTiles = []
 
         console.log(coordinates, canvas)
 

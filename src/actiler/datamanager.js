@@ -143,16 +143,13 @@ class DataManager{
       let highmap = this.colorMap[hexhigh]
       let lowmap = this.colorMap[hexlow]
 
-      let nibble1 = highmap
-      let nibble2 = lowmap
+      let nibble1 = lowmap
+      let nibble2 = highmap
 
       let result = (nibble1 << 4) | nibble2
 
       this.pixels[i] = result
-
     }
-
-
   }
 
   printData() {
