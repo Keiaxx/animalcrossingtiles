@@ -67,7 +67,7 @@
         <fish-col span="9" class="demo-col">
           <fish-card fluid color="gray">
             <div slot="header">Output Image</div>
-            <canvas id="imagecanvas"></canvas>
+            <canvas ref="imagecanvas"></canvas>
             <fish-loader :active="redrawingoutput"></fish-loader>
           </fish-card>
         </fish-col>
@@ -84,15 +84,20 @@
     <fish-card fluid color="blue">
       <div slot="header">Generated Code(s)</div>
 
-      <canvas id="qrcanvas"></canvas>
+
+      <template v-for="tile in toGenerate">
+        <fish-col span="8" class="demo-col">
+          <QRComponent :tile="String(tile.tile)" :title="title" :author="author" :town="town" :pdata="tile.pdata" :palette="rawPaletteColors"></QRComponent>
+        </fish-col>
+      </template>
+
       <div slot="footer">
         <fish-button>Download PNG</fish-button>
       </div>
 
     </fish-card>
-    2
 
-    <canvas id="processcanvas" style="display: none;"></canvas>
+    <canvas ref="processcanvas" style="display: none;"></canvas>
   </div>
 </template>
 <script>
@@ -101,6 +106,8 @@
   import ACPalette from '../actiler/palette'
   import { Cropper } from 'vue-advanced-cropper'
   import resizeImageData from 'resize-image-data'
+
+  import QRComponent from './QRComponent'
 
   import * as iq from 'image-q'
 
@@ -120,11 +127,13 @@
         gridw: 1,
         gridh: 1,
         convertedTiles: [],
+        toGenerate: [],
         rawPaletteColors: {}
       }
     },
     components: {
-      Cropper
+      Cropper,
+      QRComponent
     },
     watch: {
       gridw: function (val) {
@@ -151,21 +160,30 @@
         return arr
       }
     },
-    // watch: {
-    //   files: function(val) {
-    //     console.log(val)
-    //   }
-    // },
+    watch: {
+      title: function(val) {
+        this.toGenerate = []
+      },
+      author: function(val) {
+        this.toGenerate = []
+      },
+      town: function(val) {
+        this.toGenerate = []
+      }
+    },
     methods: {
       clearData () {
         this.photoStatus = 'Upload a Photo'
+        this.toGenerate = []
         this.files = []
         this.photoUploaded = false
         this.qrStatus = 0
         this.img = ''
-        let canvas2 = document.getElementById('imagecanvas')
-        let ctx2 = canvas2.getContext('2d')
-        ctx2.clearRect(0, 0, 0, 0)
+        let imgc = this.$refs.imagecanvas
+        imgc.getContext('2d').clearRect(0, 0, imgc.width, imgc.height)
+
+        let pcanv = this.$refs.processcanvas
+        pcanv.getContext('2d').clearRect(0, 0, pcanv.width, pcanv.height)
       },
       onFileChange (e) {
         var files = e.target.files || e.dataTransfer.files
@@ -258,9 +276,10 @@
           let inpointArray = resizedInpointContainer.getPointArray()
           let colors = {}
           let uint32array = []
+          var nearestColorACDistance = new iq.distance.Manhattan()
           for(let p in inpointArray){
             let point = inpointArray[p]
-            let pointColor = loadedPalette.getNearestColor(distanceCalculator, point)
+            let pointColor = loadedPalette.getNearestColor(nearestColorACDistance, point)
 
             let rhex = ACPalette.dec2hex(pointColor.r)
             let ghex = ACPalette.dec2hex(pointColor.g)
@@ -283,7 +302,7 @@
           this.rawPaletteColors = colors
 
           // put quantized onto a invisible canvas for processing and separation into tiles
-          let processCanvas = document.getElementById('processcanvas')
+          let processCanvas = this.$refs.processcanvas
           let processContext = processCanvas.getContext('2d')
 
           processCanvas.width = 32 * this.gridw
@@ -292,20 +311,27 @@
           processContext.putImageData(acPalettizedImage, 0, 0)
 
           let displaypx = 128
-          let canvas2 = document.getElementById('imagecanvas')
+          let canvas2 = this.$refs.imagecanvas
           let ctx2 = canvas2.getContext('2d')
 
           canvas2.width = displaypx * this.gridw
           canvas2.height = displaypx * this.gridh
 
-          for (var w = 0; w < this.gridw; w++) {
-            for (var h = 0; h < this.gridh; h++) {
+          let num = 0
+
+          for (var h = 0; h < this.gridh; h++) {
+            for (var w = 0; w < this.gridw; w++) {
               let tl = (w * gridpx_w)
               let top = (h * gridpx_h)
               let tile32 = processContext.getImageData(tl, top, gridpx_w, gridpx_h)
               let tileContainer = iq.utils.PointContainer.fromUint8Array(tile32.data, gridpx_w, gridpx_h)
 
-              this.convertedTiles.push(tileContainer)
+              this.convertedTiles.push({
+                tile: num,
+                pdata: tileContainer
+              })
+
+
 
               let toshow = resizeImageData(tile32, displaypx, displaypx, 'nearest-neighbor')
 
@@ -313,13 +339,22 @@
 
               ctx2.lineWidth = 1
               ctx2.beginPath()
+
+              ctx2.globalAlpha = 0.3
+              ctx2.font = "40px Arial";
+              ctx2.fillStyle = "red";
+              ctx2.fillText(String(num), (w * displaypx) + 10, (h * displaypx) + 40);
+
               ctx2.globalAlpha = 0.3
               ctx2.moveTo((w * displaypx), (h * displaypx))
+
               ctx2.lineTo((w * displaypx), (h * displaypx) + displaypx)
               ctx2.lineTo((w * displaypx) + displaypx, (h * displaypx) + displaypx)
               ctx2.lineTo((w * displaypx) + displaypx, (h * displaypx))
               ctx2.lineTo((w * displaypx), (h * displaypx))
               ctx2.stroke()
+
+              num++
             }
           }
         }
@@ -329,38 +364,11 @@
         this.redrawingoutput = false
         this.loadingphoto = false
 
+        this.toGenerate = []
       },
       generateCodes () {
-        this.qrStatus = 1
-        let dm = new DataManager()
-
-        dm.setTitle(this.title)
-        dm.setAuthor(this.author)
-        dm.setTown(this.town)
-
-        let succ = dm.setPalette(this.rawPaletteColors)
-
-        if(succ){
-          dm.injectPhotoData(this.convertedTiles[0])
-        }
-
-        QRCode.toCanvas(document.getElementById('qrcanvas'),
-          [{ data: dm.getPreparedData(), mode: 'byte' }],
-          {
-            errorCorrectionLevel: 'M' // Nintendo app seems to want medium error correction
-          },
-          (error) => {
-            if (error) {
-              console.error(error)
-              this.$message.error('An error occurred when generating QR Code(s)!', 5000)
-              this.qrStatus = 3
-              return
-            }
-
-            this.qrStatus = 2
-
-            this.$message.success('Generated QR Code(s)!', 5000)
-          })
+        this.toGenerate = []
+        this.toGenerate = this.convertedTiles
       }
     },
 

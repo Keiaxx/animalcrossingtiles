@@ -126,6 +126,9 @@ class DataManager{
   injectPhotoData(pcontainer){
     let pointArray = pcontainer.getPointArray()
 
+    console.log("Injecting photo data")
+
+    let count = 0
     for(let i = 0; i < 512; i++){
       let pointhigh = pointArray[i*2]
       let pointlow = pointArray[(i*2) + 1]
@@ -149,7 +152,11 @@ class DataManager{
       let result = (nibble1 << 4) | nibble2
 
       this.pixels[i] = result
+
+      count++
     }
+
+    console.log("Injected " + count + " pixels")
   }
 
   printData() {

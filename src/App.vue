@@ -2,6 +2,12 @@
   <fish-layout class="app demo3">
     <nav slot="header">
       <div class="logo">Animal Crossing Photo Tile Generator</div>
+
+      <fish-message type="error">
+        Attention! This app is in pre beta alpha not so done release mode. Things may be broken, slow, or not even work at all.
+
+        If you find a problem feel free to send an issue or pull request on <a href="https://github.com/Keiaxx/animalcrossingtiles" target="_blank">GITHUB CLICK ME</a>
+      </fish-message>
     </nav>
 
     <div slot="content">
