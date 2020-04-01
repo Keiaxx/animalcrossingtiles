@@ -90,31 +90,32 @@
 
 
     <fish-card color="blue" fluid>
-      <div slot="header">Generated Code(s)</div>
+      <div slot="header">Generated Code(s) <fish-button v-if="toGenerate.length > 0" v-on:click="generatePNG">Download PNG</fish-button></div>
 
 
       <template v-for="tile in toGenerate">
-        <fish-col class="demo-col" span="8">
-          <QRComponent :author="author" :palette="rawPaletteColors" :pdata="tile.pdata" :tile="String(tile.tile)"
+        <fish-col class="demo-col" span="24">
+          <QRComponent :author="author"
+                       :palette="rawPaletteColors"
+                       :pdata="tile.pdata"
+                       :tile="String(tile.tile)"
                        :title="title"
-                       :town="town"></QRComponent>
+                       :town="town"
+                       v-on:generated="qrGenerated"></QRComponent>
         </fish-col>
       </template>
-
-      <div slot="footer">
-        <fish-button>Download PNG</fish-button>
-      </div>
 
     </fish-card>
 
     <canvas ref="processcanvas" style="display: none;"></canvas>
+    <canvas ref="exportcanvas" style="display: none;"></canvas>
   </div>
 </template>
 <script>
   import ACPalette from '../actiler/palette'
   import {Cropper} from 'vue-advanced-cropper'
   import resizeImageData from 'resize-image-data'
-
+  import canvasToImage from 'canvas-to-image';
   import QRComponent from './QRComponent'
 
   import * as iq from 'image-q'
@@ -143,7 +144,8 @@
           'biliniear-interpolation'
         ],
         lastCoordinates: false,
-        lastCanvas: false
+        lastCanvas: false,
+        generatedQRS: {}
       }
     },
     components: {
@@ -175,12 +177,15 @@
     watch: {
       title: function (val) {
         this.toGenerate = []
+        localStorage.setItem('title', val)
       },
       author: function (val) {
         this.toGenerate = []
+        localStorage.setItem('author', val)
       },
       town: function (val) {
         this.toGenerate = []
+        localStorage.setItem('town', val)
       },
       gridw: function (val) {
         console.log('CHANGED GRIDW ' + val)
@@ -193,6 +198,71 @@
       }
     },
     methods: {
+      generatePNG() {
+        let num = 0
+
+        const canvas = this.$refs.exportcanvas
+        const context = canvas.getContext('2d')
+        context.imageSmoothingEnabled = false
+        const pixsize = 400
+        canvas.width = (this.gridw * pixsize) * 2
+        canvas.height = (this.gridh * pixsize) + 20
+
+
+        context.clearRect(0, 0, canvas.width, canvas.height)
+
+        context.beginPath();
+        context.rect(0, 0, canvas.width , canvas.height);
+        context.fillStyle = "black";
+        context.fill();
+
+        let promiseArray = []
+
+        for (let h = 0; h < this.gridh; h++) {
+          for (let w = 0; w < this.gridw; w++) {
+            promiseArray.push(new Promise(resolve => {
+              let img = new Image()
+              img.src = this.generatedQRS[num]
+              img.onload = () => {
+                context.drawImage(img, w * pixsize, h * pixsize, pixsize, pixsize)
+                resolve()
+              }
+            }))
+            num++
+          }
+        }
+
+        const outputCanvas = this.$refs.imagecanvas
+
+        let copyPromise = new Promise(resolve => {
+          let destinationImage = new Image;
+          destinationImage.onload = () => {
+            context.drawImage(destinationImage, (this.gridw * pixsize),0, (this.gridw * pixsize), (this.gridh * pixsize) );
+            resolve()
+          };
+          destinationImage.src = outputCanvas.toDataURL("image/png");
+        })
+
+        Promise.all(promiseArray).then(() => {
+          copyPromise.then(() => {
+            context.font = '16px Arial';
+            context.textAlign = 'center';
+            context.fillStyle = 'red';  // a color name or by using rgb/rgba/hex values
+            context.fillText('Made with https://actiles.burni.sh/ - Animal Crossing photo tile generator', (this.gridw * pixsize), canvas.height- 2); // text and position
+
+            canvasToImage(canvas, {
+              name: this.title+"_"+this.author+"_"+this.town,
+              type: 'png',
+              quality: 1
+            });
+          })
+        })
+
+      },
+      qrGenerated({num, image}) {
+        console.log("QR GENERATED FOR " + num)
+        this.generatedQRS[num] = image
+      },
       clearData() {
         this.photoStatus = 'Upload a Photo'
         this.toGenerate = []
@@ -239,6 +309,7 @@
       invokeChange(coordinates, canvas) {
         this.redrawingoutput = true
         this.convertedTiles = []
+        this.generatedQRS = {}
 
         if (canvas) {
 
@@ -409,7 +480,9 @@
     },
 
     mounted() {
-
+      this.title = localStorage.getItem('title') || ''
+      this.author = localStorage.getItem('author') || ''
+      this.town = localStorage.getItem('town') || ''
     }
   }
 </script>
@@ -429,5 +502,20 @@
   .cropper {
     height: 400px;
     background: #DDD;
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    border: 0;
+    overflow: hidden; /*  Disable scrollbars */
+    display: block;  /* No floating content on sides */
+    image-rendering: optimizeSpeed;             /* Older versions of FF          */
+    image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
+    image-rendering: -webkit-optimize-contrast; /* Safari                        */
+    image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
+    image-rendering: pixelated;                 /* Awesome future-browsers       */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE                            */
   }
 </style>

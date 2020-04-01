@@ -2,7 +2,7 @@
   <fish-card color="purple" fluid>
     <div slot="header">QR for tile {{tile}}</div>
 
-    <canvas height="200" ref="qrcanvas" width="200"></canvas>
+    <img ref="qrimage">
   </fish-card>
 </template>
 
@@ -36,19 +36,22 @@
           dm.injectPhotoData(this.pdata)
         }
 
-        QRCode.toCanvas(this.$refs.qrcanvas,
-          [{ data: dm.getPreparedData(), mode: 'byte' }],
-          {
-            errorCorrectionLevel: 'M' // Nintendo app seems to want medium error correction
-          },
-          (error) => {
-            if (error) {
-              console.error(error)
-              return
-            }
+        var opts = {
+          errorCorrectionLevel: 'M',
+          type: 'image/png',
+          margin: 3,
+        }
 
-            console.log('Generated QR Code for ' + this.tile)
+        QRCode.toDataURL([{ data: dm.getPreparedData(), mode: 'byte' }], opts, (err, url) => {
+          if (err) throw err
+
+          this.$refs.qrimage.src = url
+
+          this.$emit('generated',  {
+            num: this.tile,
+            image: url
           })
+        })
       }
     },
     mounted: function () {
@@ -59,5 +62,9 @@
 </script>
 
 <style scoped>
-
+  img {
+    max-width: 95%;
+    max-height: 300px;
+    width: auto !important;
+  }
 </style>

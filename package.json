@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "buffer": "^5.5.0",
+    "canvas-to-image": "^2.2.0",
     "fish-ui": "^1.2.8",
     "image-q": "^2.1.2",
     "less": "^3.11.1",
