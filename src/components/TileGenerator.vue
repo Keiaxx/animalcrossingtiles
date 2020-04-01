@@ -33,7 +33,7 @@
           <fish-card color="gray" fluid>
             <div slot="header">Input Image</div>
 
-            <input @change="onFileChange" type="file">
+            <input @change="onFileChange" accept="image/*" type="file">
             {{photoStatus}}
 
             <fish-field label="Tiles Width">
