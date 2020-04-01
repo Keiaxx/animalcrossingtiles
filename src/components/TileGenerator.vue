@@ -21,6 +21,10 @@
                 <fish-input hint="" label-left="Town Name" v-model="town"></fish-input>
               </fish-col>
             </fish-row>
+
+            <fish-message v-if="notFilledOut" type="error">
+              All fields must be filled out!
+            </fish-message>
           </fish-card>
         </fish-col>
 
@@ -47,6 +51,10 @@
                 </template>
               </fish-select>
             </fish-field>
+
+            Smoother
+            <fish-switch v-model="chosenInterpolation" :yesOrNo="interpolationTypes"></fish-switch>
+            Sharper
 
             <cropper
               :minHeight="1"
@@ -87,7 +95,8 @@
 
       <template v-for="tile in toGenerate">
         <fish-col class="demo-col" span="8">
-          <QRComponent :author="author" :palette="rawPaletteColors" :pdata="tile.pdata" :tile="String(tile.tile)" :title="title"
+          <QRComponent :author="author" :palette="rawPaletteColors" :pdata="tile.pdata" :tile="String(tile.tile)"
+                       :title="title"
                        :town="town"></QRComponent>
         </fish-col>
       </template>
@@ -103,7 +112,7 @@
 </template>
 <script>
   import ACPalette from '../actiler/palette'
-  import { Cropper } from 'vue-advanced-cropper'
+  import {Cropper} from 'vue-advanced-cropper'
   import resizeImageData from 'resize-image-data'
 
   import QRComponent from './QRComponent'
@@ -111,7 +120,7 @@
   import * as iq from 'image-q'
 
   export default {
-    data () {
+    data() {
       return {
         title: '',
         author: '',
@@ -127,28 +136,29 @@
         gridh: 1,
         convertedTiles: [],
         toGenerate: [],
-        rawPaletteColors: {}
+        rawPaletteColors: {},
+        chosenInterpolation: 'biliniear-interpolation',
+        interpolationTypes: [
+          'nearest-neighbor',
+          'biliniear-interpolation'
+        ],
+        lastCoordinates: false,
+        lastCanvas: false
       }
     },
     components: {
       Cropper,
       QRComponent
     },
-    watch: {
-      gridw: function (val) {
-        console.log('CHANGED GRIDW ' + val)
-        this.gridh = 1
-      }
-    },
     computed: {
-      gridwidths () {
+      gridwidths() {
         let arr = []
         for (let i = 1; i <= 50; i++) {
           arr.push(i)
         }
         return arr
       },
-      gridheights () {
+      gridheights() {
         let arr = []
         let _this = this
         for (let i = 1; i <= 50; i++) {
@@ -157,6 +167,9 @@
           }
         }
         return arr
+      },
+      notFilledOut() {
+        return this.title.length === 0 || this.author.length === 0 || this.town.length === 0
       }
     },
     watch: {
@@ -168,10 +181,19 @@
       },
       town: function (val) {
         this.toGenerate = []
+      },
+      gridw: function (val) {
+        console.log('CHANGED GRIDW ' + val)
+        this.gridh = 1
+      },
+      chosenInterpolation: function (val) {
+        if (this.lastCanvas && this.lastCoordinates) {
+          this.invokeChange(this.lastCoordinates, this.lastCanvas)
+        }
       }
     },
     methods: {
-      clearData () {
+      clearData() {
         this.photoStatus = 'Upload a Photo'
         this.toGenerate = []
         this.files = []
@@ -184,13 +206,13 @@
         let pcanv = this.$refs.processcanvas
         pcanv.getContext('2d').clearRect(0, 0, pcanv.width, pcanv.height)
       },
-      onFileChange (e) {
+      onFileChange(e) {
         var files = e.target.files || e.dataTransfer.files
         if (!files.length)
           return
         this.createImage(files[0])
       },
-      createImage (file) {
+      createImage(file) {
         let reader = new FileReader()
 
         reader.onerror = (e) => {
@@ -209,18 +231,21 @@
         }
         reader.readAsDataURL(file)
       },
-      change ({ coordinates, canvas }) {
+      change({coordinates, canvas}) {
+        this.lastCoordinates = coordinates
+        this.lastCanvas = canvas
+        this.invokeChange(coordinates, canvas)
+      },
+      invokeChange(coordinates, canvas) {
         this.redrawingoutput = true
         this.convertedTiles = []
-
-        console.log(coordinates, canvas)
 
         if (canvas) {
 
           let ctx = canvas.getContext('2d')
 
           let imageData = ctx.getImageData(0, 0, coordinates.width, coordinates.height)
-          const imageData2 = resizeImageData(imageData, 32 * this.gridw, 32 * this.gridh, 'nearest-neighbor') //biliniear-interpolation
+          const imageData2 = resizeImageData(imageData, 32 * this.gridw, 32 * this.gridh, this.chosenInterpolation) //biliniear-interpolation
 
           const inPointContainer = iq.utils.PointContainer.fromUint8Array(imageData2.data, 32 * this.gridw, 32 * this.gridh)
 
@@ -295,8 +320,7 @@
 
           let inpointACPalette = iq.utils.PointContainer.fromUint32Array(Uint32Array.from(uint32array), 32 * this.gridw, 32 * this.gridh)
           let acPalettizedImage = new ImageData(Uint8ClampedArray.from(inpointACPalette.toUint8Array()), 32 * this.gridw, 32 * this.gridh)
-          console.log(colors)
-          console.log(Object.keys(colors).length)
+
           this.rawPaletteColors = colors
 
           // put quantized onto a invisible canvas for processing and separation into tiles
@@ -329,7 +353,7 @@
                 pdata: tileContainer
               })
 
-              let toshow = resizeImageData(tile32, displaypx, displaypx, 'nearest-neighbor')
+              let toshow = resizeImageData(tile32, displaypx, displaypx, this.chosenInterpolation)
 
               ctx2.putImageData(toshow, (w * displaypx), (h * displaypx))
 
@@ -355,20 +379,36 @@
           }
         }
 
-        console.log(this.convertedTiles)
-
         this.redrawingoutput = false
         this.loadingphoto = false
 
         this.toGenerate = []
       },
-      generateCodes () {
-        this.toGenerate = []
-        this.toGenerate = this.convertedTiles
+      generateCodes: function () {
+        let hasError = false
+        if (this.title.length === 0) {
+          this.$message.error('error: Title cannot be blank!', 2000)
+          hasError = true
+        }
+
+        if (this.author.length === 0) {
+          this.$message.error('error: Author cannot be blank!', 2000)
+          hasError = true
+        }
+
+        if (this.town.length === 0) {
+          this.$message.error('error: Town name cannot be blank!', 2000)
+          hasError = true
+        }
+
+        if (!hasError) {
+          this.toGenerate = []
+          this.toGenerate = this.convertedTiles
+        }
       }
     },
 
-    mounted () {
+    mounted() {
 
     }
   }

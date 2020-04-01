@@ -6,13 +6,40 @@ class DataManager {
   constructor () {
     this.preparedData = Buffer.alloc(620)
     this.rawTitle = Buffer.alloc(40)
+
     this.unknown1 = Buffer.alloc(4)
+    this.unknown1[2] = 0xb6
+    this.unknown1[3] = 0xec
+
     this.rawAuthor = Buffer.alloc(16)
     this.unknown2 = Buffer.alloc(6)
+    this.unknown2[4] = 0x44
+    this.unknown2[5] = 0xc5
+
     this.rawTown = Buffer.alloc(16)
     this.rawUID = Buffer.alloc(6)
+    this.rawUID[4] = 0x19
+    this.rawUID[5] = 0x31
+
     this.rawColors = Buffer.alloc(15)
+    this.rawColors[0] = 0x0f
+    this.rawColors[1] = 0x1f
+    this.rawColors[2] = 0x2f
+    this.rawColors[3] = 0x3f
+    this.rawColors[4] = 0x4f
+    this.rawColors[5] = 0x5f
+    this.rawColors[6] = 0x6f
+    this.rawColors[7] = 0x7f
+    this.rawColors[8] = 0x8f
+    this.rawColors[9] = 0x9f
+    this.rawColors[10] = 0xaf
+    this.rawColors[11] = 0xbf
+    this.rawColors[12] = 0xcf
+    this.rawColors[13] = 0xdf
+    this.rawColors[14] = 0xef
+
     this.unknown3 = Buffer.alloc(1)
+    this.unknown3[0] = 0xcc
 
     this.unknown4 = Buffer.alloc(1)
     this.unknown4[0] = 0x0A

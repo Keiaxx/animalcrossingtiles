@@ -26,7 +26,7 @@
       generate () {
         let dm = new DataManager()
 
-        dm.setTitle(this.title)
+        dm.setTitle(this.tile + "-" + this.title)
         dm.setAuthor(this.author)
         dm.setTown(this.town)
 
