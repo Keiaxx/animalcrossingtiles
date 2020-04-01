@@ -175,6 +175,17 @@ class DataManager {
       let nibble1 = lowmap
       let nibble2 = highmap
 
+      // Support transparency
+      // TODO: Add thresholds for when something is transparent
+      //       as of now only values exactly alpha 0 are converted to 0xFF
+      if(pointlow.a === 0){
+        nibble1 = 0xFF
+      }
+
+      if(pointhigh.a === 0){
+        nibble2 = 0xFF
+      }
+
       let result = (nibble1 << 4) | nibble2
 
       this.pixels[i] = result

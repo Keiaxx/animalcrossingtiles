@@ -205,16 +205,54 @@
         const context = canvas.getContext('2d')
         context.imageSmoothingEnabled = false
         const pixsize = 400
+        const bottomheight = 22
         canvas.width = (this.gridw * pixsize) * 2
-        canvas.height = (this.gridh * pixsize) + 20
+        canvas.height = (this.gridh * pixsize) + bottomheight
 
 
         context.clearRect(0, 0, canvas.width, canvas.height)
 
+        // context.beginPath();
+        // context.rect(0, 0, canvas.width , canvas.height);
+        // context.fillStyle = "white";
+        // context.fill();
+
+        const board = {
+          rows: Math.ceil(canvas.height / 8),
+          columns: Math.ceil(canvas.width / 8),
+          colors: {
+            light: '#f8fff7',
+            dark: '#87878d'
+          }
+        }
+
         context.beginPath();
-        context.rect(0, 0, canvas.width , canvas.height);
-        context.fillStyle = "black";
+        context.fillStyle = board.colors.dark;
+        context.rect(0, 0, canvas.width, canvas.height);
         context.fill();
+
+        context.beginPath();
+        context.fillStyle = board.colors.light;
+        for (let column = 0; column < board.columns; column++) {
+          for (let row = 0; row < board.rows; row++) {
+            if (row % 2 === 0 && column % 2 === 1 || row % 2 === 1 && column % 2 === 0) {
+              context.rect(
+                column * canvas.width / board.columns,
+                row * canvas.height / board.rows,
+                canvas.width / board.columns,
+                canvas.height / board.rows
+              );
+            }
+          }
+        }
+        context.fill();
+
+
+        context.beginPath();
+        context.fillStyle = "black";
+        context.rect(0, (this.gridh * pixsize), canvas.width, bottomheight);
+        context.fill();
+
 
         let promiseArray = []
 
@@ -245,10 +283,10 @@
 
         Promise.all(promiseArray).then(() => {
           copyPromise.then(() => {
-            context.font = '16px Arial';
+            context.font = 'bold 15px Arial';
             context.textAlign = 'center';
-            context.fillStyle = 'red';  // a color name or by using rgb/rgba/hex values
-            context.fillText('Made with https://actiles.burni.sh/ - Animal Crossing photo tile generator', (this.gridw * pixsize), canvas.height- 2); // text and position
+            context.fillStyle = 'white';  // a color name or by using rgb/rgba/hex values
+            context.fillText('Made with https://actiles.burni.sh/ - Animal Crossing photo tile generator', (this.gridw * pixsize), canvas.height - 4); // text and position
 
             canvasToImage(canvas, {
               name: this.title+"_"+this.author+"_"+this.town,
@@ -322,7 +360,7 @@
 
           // desired colors number
           var targetColors = 15
-          var distanceCalculator = new iq.distance.EuclideanBT709NoAlpha()
+          var distanceCalculator = new iq.distance.EuclideanBT709()
           var paletteQuantizer = new iq.palette.RGBQuant(distanceCalculator, targetColors)
           paletteQuantizer.sample(inPointContainer)
           var palette = paletteQuantizer.quantizeSync()
@@ -366,6 +404,7 @@
             let color = acp[p]
             loadedPalette.add(iq.utils.Point.createByRGBA(color.r, color.g, color.b, 255))
           }
+          loadedPalette.add(iq.utils.Point.createByRGBA(0, 0, 0, 0))
 
           let inpointArray = resizedInpointContainer.getPointArray()
           let colors = {}
